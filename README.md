@@ -6,6 +6,8 @@ A page item plugin for use with tables that have a parent_id (or similar) to dis
 down through the structure ... and to and allow the user to click on elements to rise up through the hierarchy. 
 This is just like breadcrumbs and really helps the user navigate in hierarchical tables
 
+![](ParentTrail_Preview.gif)
+
 # Features
 - Looks like and mirrors in most respects the behavior of the normal popup LOV
 - But shows full 'clickable' path to a record
