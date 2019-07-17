@@ -1,6 +1,6 @@
 --====================== get_record ===============================================================
 
-procedure get_record(p_query in varchar2, p_key in varchar2, p_separator in varchar2, p_ids out varchar2, p_crumbs out varchar2)
+procedure get_record(p_query in varchar2, p_key in varchar2, p_ids out varchar2, p_crumbs out varchar2)
 is
     l_query_result    apex_plugin_util.t_column_value_list;    
 begin
@@ -24,8 +24,8 @@ begin
         p_max_rows          => 1
         );
 
-    p_ids    := ltrim(l_query_result(2)(1), p_separator);  -- trim off any leading separator
-    p_crumbs := ltrim(l_query_result(3)(1), p_separator);
+    p_ids    := ltrim(l_query_result(2)(1), ':');  -- trim off any leading separators
+    p_crumbs := ltrim(l_query_result(3)(1), ':');
 
 exception
     when no_data_found then 
@@ -42,45 +42,61 @@ procedure render (
   p_result in out nocopy apex_plugin.t_item_render_result
 )
 is
-    l_separator           apex_application_page_items.attribute_01%type := p_item.attribute_01;
-    l_show_search_button  apex_application_page_items.attribute_01%type := p_item.attribute_02;
-    l_title               apex_application_page_items.attribute_06%type := p_item.attribute_06;
-    l_no_data_found       apex_application_page_items.attribute_09%type := p_item.attribute_09;
     l_ids                 varchar2(4000);
     l_crumbs              varchar2(4000);
+    
+    function get_message(p_message in varchar2, p_default in varchar2) return varchar2
+    is
+        l_return    varchar2(500);
+    begin
+        l_return := apex_lang.message(p_message);
+        if l_return = p_message then
+            return p_default;
+        end if;
+        return l_return;
+    end;
 begin
+    apex_debug.enter('PTRAIL.render', 
+        'name',             p_item.name,
+        'separator',        p_item.attribute_01,
+        'showSearchButton', p_item.attribute_02,
+        'lov_definition',   p_item.lov_definition,
+        'lov_display_null', case when p_item.lov_display_null then 'Y' else 'N' end,
+        'lov_null_text',    p_item.lov_null_text,
+        'lov_null_value',   p_item.lov_null_value        
+        );
+    
 -- get data you need --
 
-    get_record(p_item.lov_definition, p_param.value, l_separator, l_ids, l_crumbs);
+    get_record(p_item.lov_definition, p_param.value, l_ids, l_crumbs);
     
 -- embed hidden input that hold value --
     
     sys.htp.prn('<input'); 
-    sys.htp.prn(' type="hidden"');
-    sys.htp.prn(' id="' || p_item.name || '"');
-    sys.htp.prn(' name="' || apex_plugin.get_input_name_for_page_item(false) || '"');
-    sys.htp.prn(case when p_item.is_required then ' required' else null end);
-    if p_param.is_readonly then
-        sys.htp.prn(' disabled');
-    end if;
+    sys.htp.prn(' type="hidden" ');
+    sys.htp.prn(apex_plugin_util.get_element_attributes(p_item, apex_plugin.get_input_name_for_page_item(false)));    
+    if p_param.is_readonly or p_param.is_printer_friendly then
+        sys.htp.prn(' disabled');  
+    end if;   
     sys.htp.prn('>');
 
 -- field icon --
 
-    if length(trim(p_item.icon_css_classes)) > 0 then
-        sys.htp.prn('<span class="apex-item-icon fa ' || p_item.icon_css_classes || '"></span>');
-    end if;    
+  --if length(trim(p_item.icon_css_classes)) > 0 then
+  --    sys.htp.prn('<span class="apex-item-icon fa ' || p_item.icon_css_classes || '"></span>');
+  --end if;    
 
 -- raw text for display --
 
-    sys.htp.prn('<span id="' || p_item.name || '_DISPLAY" class="apex-item-display-only display_only');
-    sys.htp.prn(case when length(trim(p_item.icon_css_classes)) > 0 then ' apex-item-has-icon' end);
+    sys.htp.prn('<span id="' || p_item.name || '_DISPLAY" ');
+    sys.htp.prn(' class="' || case when p_param.is_readonly then 'apex-item-display-only display_only' else 'popup_lov apex-item-text apex-item-popup-lov' end); 
+  --sys.htp.prn(case when length(trim(p_item.icon_css_classes)) > 0 then ' apex-item-has-icon' end);
     sys.htp.prn(' ' || p_item.element_css_classes || '">'); 
     sys.htp.prn('</span>');
 
 -- add in search button --
 
-    if l_show_search_button = 'Y' then
+    if p_item.attribute_02 = 'Y' then
         sys.htp.prn('<button type="button" id="' || p_item.name || '_BUTTON"');
         sys.htp.prn(' class="a-Button modal-lov-button a-Button--popupLOV"');
         if p_param.is_readonly or p_param.is_printer_friendly then
@@ -100,17 +116,17 @@ begin
               || 'ajaxIdentifier: "'    || apex_plugin.get_ajax_identifier || '",'
               || 'cascadingItems: "'    || apex_plugin_util.item_names_to_jquery(p_item_names => p_item.lov_cascade_parent_items, p_item => p_item) || '",'  -- XXX probably don't need to jquery these
               || 'pageItemsToSubmit: "' || apex_plugin_util.item_names_to_jquery(p_item_names => p_item.ajax_items_to_submit, p_item => p_item) || '",'
-              || 'separator: "'         || l_separator || '",'
-              || 'placeholder: "'       || apex_escape.html(p_item.placeholder) || '",'
+              || 'separator: "'         || replace(p_item.attribute_01, '"', '&quot;') || '",'
+              || 'showSearchButton: "'  || p_item.attribute_02 || '",'
               || 'display_null: "'      || case when p_item.lov_display_null then 'Y' else 'N' end || '",'
               || 'null_text: "'         || apex_escape.html(p_item.lov_null_text) || '",'
               || 'null_value: "'        || apex_escape.html(p_item.lov_null_value) || '",'
-              || 'showSearchButton: "'  || l_show_search_button || '",'
-              || 'title: "'             || l_title || '",'
-              || 'noDataFound: "'       || l_no_data_found || '",'
+              || 'invalidValue: "'      || apex_escape.html(get_message('PTRAIL_INVALID_VALUE', 'Invalid value')) || '",'
+              || 'title: "'             || apex_escape.html(get_message('PTRAIL_DIALOG_TITLE', 'Select value')) || '",'
+              || 'noDataFound: "'       || apex_escape.html(get_message('PTRAIL_NO_DATA_FOUND', 'No matching records found')) || '",'
               || 'previousLabel: "'     || wwv_flow_lang.system_message('PAGINATION.PREVIOUS') || '",'
               || 'nextLabel: "'         || wwv_flow_lang.system_message('PAGINATION.NEXT') || '",'
-              || 'initial_value: "'     || p_param.value || '",'
+              || 'initial_value: "'     || apex_escape.html(p_param.value) || '",'
               || 'initial_ids: "'       || l_ids || '",'
               || 'initial_crumbs: "'    || l_crumbs || '"'         
               ||'});'
@@ -134,13 +150,16 @@ is
         p_param  in            apex_plugin.t_item_ajax_param,
         p_result in out nocopy apex_plugin.t_item_ajax_result)
     is
-        l_separator         apex_application_page_items.attribute_01%type := p_item.attribute_01;
         l_ids               varchar2(4000);
         l_crumbs            varchar2(4000);
     begin
+        apex_debug.enter('PTRAIL.ajax_get_record', 
+            'value',           apex_application.g_x02
+            );
+        
     -- fetch data --
     
-        get_record(p_item.lov_definition, apex_application.g_x02, l_separator, l_ids, l_crumbs);
+        get_record(p_item.lov_definition, apex_application.g_x02, l_ids, l_crumbs);
 
     -- feed into json for return to client --
     
@@ -159,13 +178,17 @@ is
         p_param  in            apex_plugin.t_item_ajax_param,
         p_result in out nocopy apex_plugin.t_item_ajax_result)
     is
-        l_separator         apex_application_page_items.attribute_01%type := p_item.attribute_01;
         l_filter            varchar2(256) := upper(apex_application.g_x02);
         l_first_row         number := nvl(to_number(apex_application.g_x03), 1);
         l_max_rows          number := 100;
         l_result            apex_plugin_util.t_column_value_list;
         l_returned_rows     number;
     begin
+        apex_debug.enter('PTRAIL.ajax_search_records', 
+            'filter',           l_filter,
+            'first_row',        l_first_row
+            );
+        
     -- fetch data --
 
         l_result := apex_plugin_util.get_data (
@@ -200,17 +223,23 @@ is
             apex_json.open_object();
             
             apex_json.write('R', l_result(1)(i), true);
-            apex_json.write('D', ltrim(l_result(2)(i), l_separator), true);   -- might want to apex_escape these
-            apex_json.write('S', ltrim(l_result(3)(i), l_separator), true);   -- but make sure also escape separator
+            apex_json.write('D', ltrim(l_result(2)(i), ':'), true);   -- might want to apex_escape these
+            apex_json.write('S', ltrim(l_result(3)(i), ':'), true);
 
             apex_json.close_object();
 
         end loop;
 
         apex_json.close_all();
-        
+
     end ajax_search_records;
 begin
+    apex_debug.enter('PTRAIL.ajax', 
+        'action',           apex_application.g_x01,
+        'name',             p_item.name,
+        'lov_definition',   p_item.lov_definition
+        );
+        
     if l_action = 'GET_RECORD' then
         ajax_get_record(p_item, p_plugin, p_param, p_result);
     elsif l_action = 'SEARCH_RECORDS' then

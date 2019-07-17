@@ -2,44 +2,43 @@ $.widget('rabarton.parentTrail', {
 
     options: {
         id: '',
-        title: '',
         itemName: '',
         ajaxIdentifier: '',
         cascadingItems: '',
         pageItemsToSubmit: '',
         separator: ' » ',
-        placeholder: '',
         display_null: 'N',
         null_text: '',
         null_value: '',
         showSearchButton: 'Y',
+        invalidValue: 'Invalid value',
+        title: '',
         noDataFound: '',
         previousLabel: 'Previous',
         nextLabel: 'Next',
 
         initial_value: '',
         initial_ids: '',
-        initial_crumbs: '',
-
-        modalWidth: 500,
-        modalHeight: 500,
-        modalRows: 100      
+        initial_crumbs: ''
     },
 
-    _returnValue: '',
-
-    _item$: null,
-    _itemDisplay$: null,
-    _searchButton$: null,
+    modalWidth:         500,
+    modalHeight:        500,
+    modalRows:          100,
     
-    _dialog$: null,
-    _dialogFilterText$: null,
-    _dialogRows$: null,
-    
-    _topApex: apex.util.getTopApex(),
+    current_value:      '',
+    current_ids:        '',
+    current_crumbs:     '',
 
-    _disableChangeEvent: false,
-    _activeSearchTerm: '',
+    item$: null,
+    itemDisplay$:       null,
+    searchButton$:      null,
+    
+    dialog$:            null,
+    dialogFilterText$:  null,
+    dialogRows$:        null,
+    
+    activeSearchTerm:   '',
 
 // ======================= public =================================================================
 // -------- _Create ----------------------------------------------------------------
@@ -48,45 +47,77 @@ $.widget('rabarton.parentTrail', {
     _create: function () {    // public
         var self = this
 
-        self._item$           = $('#' + self.options.itemName)      
-        self._itemDisplay$    = $('#' + self.options.itemName + '_DISPLAY')      
+        apex.debug.log('PTRAIL', '_Create', self.options.itemName, self.options)
 
+        self.item$           = $('#' + self.options.itemName)      
+        self.itemDisplay$    = $('#' + self.options.itemName + '_DISPLAY')
+        
+        self.current_value   = self.options.initial_value
+        self.current_ids     = self.options.initial_ids
+        self.current_crumbs  = self.options.initial_crumbs
+        
+    // put inverted commas back in escaped separator
+    
+        self.options.separator = self.options.separator.replace(/&quot;/g, '"')
+        
     // set up item in apex
     
-        self.FieldInitApex()
-       
+        self.SetupApexAPI()
+            
     // set up search and accompanying dialog
         
-        if (self.options.showSearchButton == 'Y') {  // XXX or is_printer_friendly or is disabled or is read only etc
+        if (self.options.showSearchButton == 'Y' && !self.item$.prop('disabled')) {
             
-            self._searchButton$   = $('#' + self.options.itemName + '_BUTTON')
+            self.searchButton$   = $('#' + self.options.itemName + '_BUTTON')
         
-            self._searchButton$.on('click', function (e) {
-                if (!self._dialog$) {
+            self.searchButton$.on('click', function (e) {
+                if (!self.dialog$) {
                     self.DialogCreate()
                 }
                 else {
-                    self._activeSearchTerm = ''
-                    self._dialogFilterText$.val('')
-                    self._dialogRows$.html('<br>')
+                    self.activeSearchTerm = ''
+                    self.dialogFilterText$.val('')
+                    self.dialogRows$.html('<br>')
                 }
-                self._dialog$.dialog({
+                
+              //$('body').addClass('apex-no-scroll')
+                
+                self.dialog$.dialog({
                     title: self.options.title,
                     modal: true,
-                    height: self.options.modalHeight,
-                    width: self.options.modalWidth,
+                    height: self.modalHeight,
+                    width: self.modalWidth,
                     dialogClass: 'ui-dialog--apex',
                     close: function() {
-                        self._dialogRows$.html('<br>')
+                        self.dialogRows$.html('<br>')
+                      //$('body').removeClass('apex-no-scroll')
                     }
                 })
                 self.DialogSearchRecords(1)
             })
         }
         
-        $(self.options.cascadingItems).on('change', function () {
-            $s(self.options.itemName, null, '')    // XXX perhaps need name of no name 
+    // set up event handlers for clicking on links and changes to cascaded items
+        
+        self.itemDisplay$.on('click', 'a', function(e) {
+
+            var i  = this.dataset.i
+            if (i == -1 || (i == 0 && self.current_value == '')) 
+                return;
+            
+            if (i == 0)
+                self.FieldSetValue('', '', '');
+            else
+                self.FieldSetValue(self.current_ids.split(':')[i - 1], self.current_ids.split(':').slice(0, i).join(':'), self.current_crumbs.split(':').slice(0, i).join(':'));
         })
+        
+        $(self.options.cascadingItems).on('change', function () {            
+            self.FieldSetValue('', '', '')
+        })
+        
+    // set up current based on initial
+    
+        self.FieldUpdateDisplay()        
     },
     
 // ======================= private field functions =================================================================
@@ -94,149 +125,171 @@ $.widget('rabarton.parentTrail', {
 // -------- FieldCalcDisplayHTML ------------------------------------------------------------
 // -------- Work out html for a certain value------------------------------------------------------------
 
-    FieldCalcDisplayHTML: function (p_value, p_ids, p_crumbs) {       // private
+    FieldCalcDisplayHTML: function () {       // private
         var self = this
         
-        function pad_zero(num, size) { 
-            var s = num + ""
-            while (s.length < size) s = "0" + s
-            return s
-        } 
-        
-        if (p_crumbs == 'FLAG_INVALID') {
-            return 'Invalid entry'
+        if (self.current_crumbs == 'FLAG_INVALID') {
+            
+            apex.message.showErrors(
+                {
+                    type:       "error",
+                    location:   "inline",
+                    pageItem:   self.options.itemName,
+                    message:    self.options.invalidValue,
+                    unsafe:     false
+                }
+            ); 
+            
+            return '' + self.current_value
         }
         
-        var display_html = ""
-        if (self._item$.prop('disabled')) {   // XXX watch out also for p_param.is_printer_friendly
+        apex.message.clearErrors(self.options.itemName);
+          
+        var display_html = ''
+        if (self.item$.prop('disabled')) {
             if (self.options.display_null == 'Y') {
                 display_html += self.options.null_text
             }
-            if (p_crumbs) {
+            if (self.current_crumbs) {
                 if (display_html.length > 0) {
                     display_html += self.options.separator
                 }
-                display_html += p_crumbs
+                display_html += self.current_crumbs.replace(/:/g, self.options.separator)
             }
             return display_html        
         }
     
         if (self.options.display_null == 'Y') {
-            display_html += '<a href="javascript:$s(\'' + self.options.itemName + '\',\'\',$v(\'' + self.options.itemName + '_DISPLAY\').substr(0,parseInt(\'XXXX\')));">' + self.options.null_text + '</a>'
-            display_html = display_html.replace('XXXX', pad_zero(display_html.length, 4))
+            display_html += '<a data-i="0" href="javascript:null;">' + self.options.null_text + '</a>'
         }
 
-        if (!p_value || p_value.length === 0) {
-            return display_html ? display_html : self.options.placeholder
+        if (!self.current_value || self.current_value.length === 0) {
+            if (display_html)
+                return display_html;
+            
+            var l_placeholder = self.item$.attr('placeholder')
+            return l_placeholder === undefined ? '' : l_placeholder
         }
         
-        var crumbs = p_crumbs.split(self.options.separator)
-        var ids = p_ids.split(self.options.separator)
+        var crumbs = self.current_crumbs.split(':')
+        var ids    = self.current_ids.split(':')
 
         for (var i = 0; i < crumbs.length; i++) {
             if (display_html.length > 0) {
                 display_html += self.options.separator
             }
-            display_html += '<a href="javascript:$s(\'' + self.options.itemName + '\',\'' + ids[i] + '\',$v(\'' + self.options.itemName + '_DISPLAY\').substr(0,parseInt(\'XXXX\')));">' + crumbs[i] + '</a>'
-            display_html = display_html.replace('XXXX', pad_zero(display_html.length, 4))     // take care that length entry does not alter length of string ...
+            display_html += '<a data-i="' + (i == crumbs.length -1 ? -1 : i + 1) + '" href="javascript:null;">' + crumbs[i] + '</a>'
         }
 
         return display_html
     },
     
 // -------- FieldUpdateDisplay ------------------------------------------------------------
+// -------- update displayed data and trigger change if needed -------------------------------------------
+
+    FieldUpdateDisplay: function (p_trigger_change = false) {  // private
+        var self = this
+        
+        self.itemDisplay$.html(self.FieldCalcDisplayHTML())
+        
+        if (p_trigger_change)
+            self.item$.trigger('change');
+    },
+    
+// -------- FieldSetValue ------------------------------------------------------------
 // -------- Something changed and we need to fetch data and then update display -------------------------------------------
 
-    FieldUpdateDisplay: function () {   // private
+    FieldSetValue: function (p_new_value, p_new_ids, p_new_crumbs, p_suppress_change = false) {   // private
         var self = this
-
-        if (!self._returnValue || self._returnValue == '') {
-            self._itemDisplay$.html(self.FieldCalcDisplayHTML(self._returnValue, null, null))
+        
+        apex.debug.log('PTRAIL', 'FieldSetValue', 'id:' + self.options.itemName, 'new_value:' + p_new_value, 'new_ids=' + p_new_ids, 'new_crumbs=' + p_new_crumbs)
+        
+        self.current_value  = p_new_value  ? p_new_value  : ''
+        self.current_ids    = p_new_ids    ? p_new_ids    : ''
+        self.current_crumbs = p_new_crumbs ? p_new_crumbs : ''
+        
+        if (!self.current_value || (self.current_ids && self.current_crumbs)) {
+            self.FieldUpdateDisplay(!p_suppress_change)
         }
         else {
             apex.server.plugin(
                 self.options.ajaxIdentifier, 
                 {
                     x01: 'GET_RECORD',
-                    x02: self._returnValue,
+                    x02: self.current_value,
                     pageItems: [self.options.pageItemsToSubmit, self.options.cascadingItems].filter(function (selector) {return (selector)}).join(',')
                 }, 
                 {
                     dataType: 'json',
-                    success: function (pData) 
-                    {
-                        self._itemDisplay$.html(self.FieldCalcDisplayHTML(self._returnValue, pData.r_ids, pData.r_crumbs))
+                    success: function (pData) {                    
+                        self.current_ids    = pData.r_ids
+                        self.current_crumbs = pData.r_crumbs
+                        self.FieldUpdateDisplay(!p_suppress_change)
+                        
+                        apex.debug.log('PTRAIL', 'GET_RECORD succeeded', 'value:' + self.current_value, 'ids=' + self.current_ids, 'crumbs=' + self.current_crumbs)
+                    },
+                    error: function (p_XHR, p_text, p_error) {
+                        apex.debug.log('PTRAIL', 'GET_RECORD failed for reason:', p_XHR, p_text, p_error)
+                        apex.message.alert('Access to a single record failed for following reason: ' + p_error)
                     }
                 }
             )
         }
     },
 
-// -------- FieldInitApex ------------------------------------------------------------
+// -------- SetupApexAPI ------------------------------------------------------------
 // -------- Get link into apex sorted -------------------------------------------
 
-    FieldInitApex: function () {     // private
+    SetupApexAPI: function () {     // private
         var self = this
 
-        apex.item.create(self.options.itemName, {
-            
+        apex.debug.log('PTRAIL', 'SetupApexAPI', 'id:' + self.options.itemName)
+
+        apex.item.create(self.options.itemName, {            
             enable: function () {            
-                self._item$.prop('disabled', false)
-                if (self._searchButton$) {self._searchButton$.show()}
+                self.item$.prop('disabled', false)
+                self.itemDisplay$.removeClass('apex-item-display-only display_only')
+                self.itemDisplay$.addClass('popup_lov apex-item-text apex-item-popup-lov')
+                if (self.searchButton$) {self.searchButton$.show()}
                 self.FieldUpdateDisplay()
             },
             disable: function () {
-                self._item$.prop('disabled', true)
-                if (self._searchButton$) {self._searchButton$.hide()}
+                self.item$.prop('disabled', true)
+                self.itemDisplay$.removeClass('popup_lov apex-item-text apex-item-popup-lov')
+                self.itemDisplay$.addClass('apex-item-display-only display_only')
+                if (self.searchButton$) {self.searchButton$.hide()}
                 self.FieldUpdateDisplay()
             },
             isDisabled: function () {
-                return self._item$.prop('disabled')
+                return self.item$.prop('disabled')
             },
             show: function () {
-                self._itemDisplay$.show()
-                if (self._searchButton$) {self._searchButton$.show()}
+                self.itemDisplay$.show()
+                if (self.searchButton$) {self.searchButton$.show()}
             },
             hide: function () {
-                self._itemDisplay$.hide()
-                if (self._searchButton$) {self._searchButton$.hide()}
+                self.itemDisplay$.hide()
+                if (self.searchButton$) {self.searchButton$.hide()}
             },
             setValue: function (pValue, pDisplayValue, pSuppressChangeEvent) {
-                _disableChangeEvent = pSuppressChangeEvent
-                self._returnValue = '' + pValue     // take care to keep things as a string
-                _disableChangeEvent = false
-
-                if (pDisplayValue) {
-                    self._itemDisplay$.html(pDisplayValue);
-                }
-                else {
-                    self.FieldUpdateDisplay()
-                }
-                if (self._returnValue) {   // XXX need finer control than this on validity
-                    apex.message.clearErrors(self.options.itemName)
-                }
+                self.FieldSetValue(pValue, null, null, pSuppressChangeEvent)
             },
             getValue: function () {
-                return self._returnValue || ''
-            }, /*
+                return self.current_value || ''
+            },
             getValidity: function() {
                 var l_validity = { valid: true };
-                ... l_validity.valid = false;
+                if (self.current_crumbs == 'FLAG_INVALID')
+                    l_validity.valid = false;
                 return l_validity;
-            }, */
+            },
+            getValidationMessage: function() {
+                return self.options.invalidValue
+            },
             isChanged: function () {
-                return self._returnValue !== self.options.initial_value
+                return self.current_value !== self.options.initial_value
             }
         })
-                
-        self._item$['trigger'] = function (type, data) {
-            if (type === 'change' && self._disableChangeEvent) {
-                return     // don't trigger change in middle of async callback
-            }
-            $.fn.trigger.call(self._item$, type, data)
-        } 
-        
-        apex.item(self.options.itemName).setValue(self.options.initial_value, self.FieldCalcDisplayHTML(self.options.initial_value, self.options.initial_ids, self.options.initial_crumbs), true)      
     },
     
 // ======================= private dialog functions =================================================================
@@ -247,7 +300,11 @@ $.widget('rabarton.parentTrail', {
     DialogCreate: function () {  // private
         var self = this
         
-        self._dialog$ = $(
+        apex.debug.log('PTRAIL', 'DialogCreate', 'id:' + self.options.itemName)
+
+    // set up basic elements
+    
+        self.dialog$ = $(
             '<div id="' + self.options.itemName + '_DIALOG" title="Basic dialog">' +
                 '<div class="t-PopupLOV-actions t-Form--large" style="position:relative">' +
                     '<input id="' + self.options.itemName + '_FILTER_TEXT" type="text" name="x02" size="20" maxlength="100" value="" class="apex-item-text" title="Search Term">' +
@@ -257,32 +314,36 @@ $.widget('rabarton.parentTrail', {
             '</div>'
             ).appendTo('body')
         
-        self._dialogFilterText$   = $('#' + self.options.itemName + '_FILTER_TEXT')
-        self._dialogRows$         = $('#' + self.options.itemName + '_ROWS')
+        self.dialogFilterText$   = $('#' + self.options.itemName + '_FILTER_TEXT')
+        self.dialogRows$         = $('#' + self.options.itemName + '_ROWS')
         
-        self._dialogRows$.css({height:400, overflow:'auto'})
-        
-        self._dialog$.on('click', '#' + self.options.itemName + '_FILTER_BUTTON', function (e) {
-            self._activeSearchTerm = self._dialogFilterText$.val()
+        self.dialogRows$.css({height:400, overflow:'auto'})
+    
+    // add in event handlers
+    
+        self.dialog$.on('click', '#' + self.options.itemName + '_FILTER_BUTTON', function (e) {
+            self.activeSearchTerm = self.dialogFilterText$.val()
             self.DialogSearchRecords(1)
-        })        
-        self._dialog$.on('keydown', '#' + self.options.itemName + '_FILTER_TEXT', function (e) {
+        })   
+        
+        self.dialog$.on('keydown', '#' + self.options.itemName + '_FILTER_TEXT', function (e) {
             if (e.keyCode == 13) { 
-                self._activeSearchTerm = self._dialogFilterText$.val()
+                self.activeSearchTerm = self.dialogFilterText$.val()
                 self.DialogSearchRecords(1)
             }/*
             else if (e.keyCode == 34) {  // XXX at higher level of dialog may want to add 38 => UP and 40 => DOWN, 33 => Page up, 34 => Page down
                 ...
                 e.stopPropagation()
             }*/
-        })       
-        self._dialog$.on('click', 'a', function (e) {
-            var row$ = self._topApex.jQuery(this)
-            self._dialog$.dialog('close')
-            apex.item(self.options.itemName).setValue(row$.attr('data-r'), self.FieldCalcDisplayHTML(row$.attr('data-r'), row$.attr('data-d'), row$.attr('data-s')))
-        })       
-        self._dialog$.on('click', '#' + self.options.itemName + '_PREV,#' + self.options.itemName + '_NEXT', function (e) {
-            self.DialogSearchRecords(self._topApex.jQuery(this).data('row'))
+        })   
+        
+        self.dialog$.on('click', 'a', function (e) {
+            self.dialog$.dialog('close')
+            self.FieldSetValue(this.dataset.r, this.dataset.d, this.dataset.s)
+        })  
+        
+        self.dialog$.on('click', '#' + self.options.itemName + '_PREV,#' + self.options.itemName + '_NEXT', function (e) {
+            self.DialogSearchRecords(this.dataset.row)
         })
     },
     
@@ -292,22 +353,26 @@ $.widget('rabarton.parentTrail', {
     DialogSearchRecords: function (p_first_row) {     // private   
         var self = this
       
+        apex.debug.log('PTRAIL', 'DialogSearchRecords', 'id:' + self.options.itemName, 'p_first_row:' + p_first_row)
+
         var items_needed = [self.options.pageItemsToSubmit, self.options.cascadingItems].filter(function (selector) {return (selector)}).join(',')        
 
         apex.server.plugin(
             self.options.ajaxIdentifier, 
             {
-                x01: 'SEARCH_RECORDS',
-                x02: self._activeSearchTerm,
-                x03: p_first_row,
+                x01:       'SEARCH_RECORDS',
+                x02:       self.activeSearchTerm,
+                x03:       p_first_row,
                 pageItems: items_needed
             }, 
             {
-                target: self._item$,
-                dataType: 'json',
-                loadingIndicator: '#' + self.options.itemName + '_DIALOG',
+                target:                   self.item$,
+                dataType:                 'json',
+                loadingIndicator:         '#' + self.options.itemName + '_DIALOG',
                 loadingIndicatorPosition: 'centered',
                 success: function (pData) {
+                    
+                    apex.debug.log('PTRAIL', 'SEARCH_RECORDS succeeded', 'id:' + self.options.itemName, 'rows_returned:' + pData.rows_returned)
                     
                     var display_html = '';
                     
@@ -318,19 +383,19 @@ $.widget('rabarton.parentTrail', {
                         var l_null_text = ''
                         if (self.options.display_null == 'Y') {
                             l_null_text = self.options.null_text + self.options.separator
-                            if (!self._activeSearchTerm) {
-                                display_html += '<br><a href="javascript:null;">' + self.options.null_text + '</a>'
+                            if (!self.activeSearchTerm) {
+                                display_html += '<br><a data-r="" data-d="" data-s="" href="javascript:null;">' + self.options.null_text + '</a>'
                             }
                         }
 
                         pData.rows.forEach(function (r, index) {
-                            display_html += '<br><a data-r="' + r['R'] + '" data-d="' + r['D'] + '" data-s="' + r['S'] + '" href="javascript:null;">' + l_null_text + r['S'] + '</a>'
+                            display_html += '<br><a data-r="' + r['R'] + '" data-d="' + r['D'] + '" data-s="' + r['S'] + '" href="javascript:null;">' + l_null_text + r['S'].replace(/:/g, self.options.separator) + '</a>'
                             })
                             
                         if (pData.first_row != 1 || pData.more_there ) {
                             display_html += '<br><div class="t-PopupLOV-pagination">Row(s) ' + pData.first_row + ' - ' + pData.last_row + '</div>'                        
                             if (pData.first_row != 1) {
-                                display_html += '<input id="' + self.options.itemName + '_PREV" data-row="' + (pData.first_row - self.options.modalRows) + '" type="button" value="' + self.options.previousLabel + '" class="t-Button t-PopupLOV-button";">'
+                                display_html += '<input id="' + self.options.itemName + '_PREV" data-row="' + (pData.first_row - self.modalRows) + '" type="button" value="' + self.options.previousLabel + '" class="t-Button t-PopupLOV-button";">'
                             }
                             if (pData.more_there) {
                                 display_html += '<input id="' + self.options.itemName + '_NEXT" data-row="' + (pData.last_row + 1) + '" type="button" value="' + self.options.nextLabel + '" class="t-Button t-PopupLOV-button";">'
@@ -338,7 +403,11 @@ $.widget('rabarton.parentTrail', {
                         }
                     }
                     
-                    self._dialogRows$.html(display_html)
+                    self.dialogRows$.html(display_html)
+                },
+                error: function (p_XHR, p_text, p_error) {
+                    apex.debug.log('PTRAIL', 'SEARCH_RECORDS failed for reason:', p_XHR, p_text, p_error)
+                    apex.message.alert('Access to records failed for following reason: ' + p_error)
                 }
             }
         )
