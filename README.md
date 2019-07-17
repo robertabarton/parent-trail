@@ -69,7 +69,7 @@ Please log any new issues in the github issue trail and I will deal with them as
 ## About Author
 Author | Github | LinkedIn | E-mail
 -------|--------|---------|-------
-Robert Barton | //github.com/robertabarton | //www.linkedin.com/in/robert-adrian-barton | robert.barton@gitm.biz
+Robert Barton | [github.com/robertabarton](//github.com/robertabarton) | www.linkedin.com/in/robert-adrian-barton | robert.barton@gitm.biz
 
 
 
