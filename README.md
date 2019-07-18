@@ -61,7 +61,7 @@ Custom attributes:
 1.2 Minor fixes from initial release
 
 # Known issues
-- Page down and up buttons affect whole window, need events to be channeled to dialog 
+- Page down and up buttons not yet processed by popup dialog 
 
 Please log any new issues in the github issue trail and I will deal with them as soon as possible
 [Parent trail issues](https://github.com/robertabarton/parent-trail/issues)

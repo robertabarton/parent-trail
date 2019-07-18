@@ -78,8 +78,9 @@ $.widget('rabarton.parentTrail', {
                     self.dialogFilterText$.val('')
                     self.dialogRows$.html('<br>')
                 }
-                
-              //$('body').addClass('apex-no-scroll')
+
+                var l_width = $('body').width()
+                $('body').width(l_width).addClass('apex-no-scroll')         // block main page scrolling, take care with sequence
                 
                 self.dialog$.dialog({
                     title: self.options.title,
@@ -89,7 +90,7 @@ $.widget('rabarton.parentTrail', {
                     dialogClass: 'ui-dialog--apex',
                     close: function() {
                         self.dialogRows$.html('<br>')
-                      //$('body').removeClass('apex-no-scroll')
+                        $('body').removeClass('apex-no-scroll').width('')    // remove block on main page scrolling
                     }
                 })
                 self._DialogSearchRecords(1)
