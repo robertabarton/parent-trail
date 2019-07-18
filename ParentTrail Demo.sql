@@ -27,7 +27,7 @@ prompt APPLICATION 80306 - Parent Trail Plugin Demo
 -- Application Export:
 --   Application:     80306
 --   Name:            Parent Trail Plugin Demo
---   Date and Time:   10:14 Thursday July 18, 2019
+--   Date and Time:   10:34 Thursday July 18, 2019
 --   Exported By:     ROBERT.BARTON@GITM.BIZ
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -116,7 +116,7 @@ wwv_flow_api.create_flow(
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'Parent Trail Plugin Demo'
 ,p_last_updated_by=>'ROBERT.BARTON@GITM.BIZ'
-,p_last_upd_yyyymmddhh24miss=>'20190718101318'
+,p_last_upd_yyyymmddhh24miss=>'20190718103213'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>4
 ,p_ui_type_name => null
@@ -237,8 +237,8 @@ wwv_flow_api.create_list_item(
 wwv_flow_api.create_list_item(
  p_id=>wwv_flow_api.id(22643994572553059289)
 ,p_list_item_display_sequence=>50
-,p_list_item_link_text=>'Plugin Spec'
-,p_list_item_link_target=>'f?p=&APP_ID.:5:&APP_SESSION.::&DEBUG.:'
+,p_list_item_link_text=>'Plugin details'
+,p_list_item_link_target=>'f?p=&APP_ID.:5:&SESSION.::&DEBUG.::::'
 ,p_list_item_icon=>'fa-plug'
 ,p_list_item_current_type=>'TARGET_PAGE'
 );
@@ -10852,21 +10852,7 @@ wwv_flow_api.create_page(
 ,p_autocomplete_on_off=>'OFF'
 ,p_page_template_options=>'#DEFAULT#'
 ,p_last_updated_by=>'ROBERT.BARTON@GITM.BIZ'
-,p_last_upd_yyyymmddhh24miss=>'20190711112810'
-);
-wwv_flow_api.create_page_plug(
- p_id=>wwv_flow_api.id(22643960576815059213)
-,p_plug_name=>'Parent Trail Plugin Demo'
-,p_icon_css_classes=>'app-icon'
-,p_region_template_options=>'#DEFAULT#'
-,p_escape_on_http_output=>'Y'
-,p_plug_template=>wwv_flow_api.id(22643861936927059072)
-,p_plug_display_sequence=>10
-,p_plug_display_point=>'REGION_POSITION_01'
-,p_plug_query_num_rows=>15
-,p_attribute_01=>'N'
-,p_attribute_02=>'HTML'
-,p_attribute_03=>'Y'
+,p_last_upd_yyyymmddhh24miss=>'20190718103213'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(22643994851750059290)
@@ -10881,6 +10867,18 @@ wwv_flow_api.create_page_plug(
 ,p_plug_source_type=>'NATIVE_LIST'
 ,p_list_template_id=>wwv_flow_api.id(22643905802003059122)
 ,p_plug_query_num_rows=>15
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(46120953229332260206)
+,p_plug_name=>'Breadcrumb'
+,p_region_template_options=>'#DEFAULT#:t-BreadcrumbRegion--useBreadcrumbTitle'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(22643878726651059090)
+,p_plug_display_sequence=>40
+,p_plug_display_point=>'REGION_POSITION_01'
+,p_menu_id=>wwv_flow_api.id(22643819008508059022)
+,p_plug_source_type=>'NATIVE_BREADCRUMB'
+,p_menu_template_id=>wwv_flow_api.id(22643926853890059145)
 );
 end;
 /
