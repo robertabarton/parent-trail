@@ -40,11 +40,10 @@ $.widget('rabarton.parentTrail', {
     
     activeSearchTerm:   '',
 
-// ======================= public =================================================================
-// -------- _Create ----------------------------------------------------------------
+// -------- _create ----------------------------------------------------------------
 // -------- jquery widget creation -------------------------------------------------
    
-    _create: function () {    // public
+    _create: function () {    // pseudo public
         var self = this
 
         apex.debug.log('PTRAIL', '_Create', self.options.itemName, self.options)
@@ -52,18 +51,18 @@ $.widget('rabarton.parentTrail', {
         self.item$           = $('#' + self.options.itemName)      
         self.itemDisplay$    = $('#' + self.options.itemName + '_DISPLAY')
         
-        self.current_value   = self.options.initial_value
-        self.current_ids     = self.options.initial_ids
-        self.current_crumbs  = self.options.initial_crumbs
-        
     // put inverted commas back in escaped separator
     
         self.options.separator = self.options.separator.replace(/&quot;/g, '"')
         
     // set up item in apex
     
-        self.SetupApexAPI()
-            
+        self._SetupApexAPI()
+        
+    // set up current based on initial
+    
+        self.FieldSetValue(self.options.initial_value, self.options.initial_ids, self.options.initial_crumbs, true)
+
     // set up search and accompanying dialog
         
         if (self.options.showSearchButton == 'Y' && !self.item$.prop('disabled')) {
@@ -72,7 +71,7 @@ $.widget('rabarton.parentTrail', {
         
             self.searchButton$.on('click', function (e) {
                 if (!self.dialog$) {
-                    self.DialogCreate()
+                    self._DialogCreate()
                 }
                 else {
                     self.activeSearchTerm = ''
@@ -93,7 +92,7 @@ $.widget('rabarton.parentTrail', {
                       //$('body').removeClass('apex-no-scroll')
                     }
                 })
-                self.DialogSearchRecords(1)
+                self._DialogSearchRecords(1)
             })
         }
         
@@ -106,26 +105,61 @@ $.widget('rabarton.parentTrail', {
                 return;
             
             if (i == 0)
-                self.FieldSetValue('', '', '');
+                self.FieldSetValue(null, null, null);
             else
                 self.FieldSetValue(self.current_ids.split(':')[i - 1], self.current_ids.split(':').slice(0, i).join(':'), self.current_crumbs.split(':').slice(0, i).join(':'));
         })
         
         $(self.options.cascadingItems).on('change', function () {            
-            self.FieldSetValue('', '', '')
+            self.FieldSetValue(null, null, null)
         })
-        
-    // set up current based on initial
-    
-        self.FieldUpdateDisplay()        
     },
     
-// ======================= private field functions =================================================================
+// -------- FieldSetValue ------------------------------------------------------------
+// -------- Something changed and we need to fetch data and then update display -------------------------------------------
 
-// -------- FieldCalcDisplayHTML ------------------------------------------------------------
+    FieldSetValue: function (p_new_value, p_new_ids, p_new_crumbs, p_suppress_change = false) {   // public
+        var self = this
+        
+        apex.debug.log('PTRAIL', 'FieldSetValue', 'id:' + self.options.itemName, 'new_value:' + p_new_value, 'new_ids=' + p_new_ids, 'new_crumbs=' + p_new_crumbs)
+        
+        self.current_value  = p_new_value  ? p_new_value                          : ''
+        self.current_ids    = p_new_ids    ? p_new_ids.replace(/^:+|:+$/g, "")    : ''     // trim leading and trailing colons
+        self.current_crumbs = p_new_crumbs ? p_new_crumbs.replace(/^:+|:+$/g, "") : ''
+        
+        if (!self.current_value || (self.current_ids && self.current_crumbs)) {
+            self._FieldUpdateDisplay(!p_suppress_change)
+        }
+        else {
+            apex.server.plugin(
+                self.options.ajaxIdentifier, 
+                {
+                    x01: 'GET_RECORD',
+                    x02: self.current_value,
+                    pageItems: [self.options.pageItemsToSubmit, self.options.cascadingItems].filter(function (selector) {return (selector)}).join(',')
+                }, 
+                {
+                    dataType: 'json',
+                    success: function (pData) {                    
+                        self.current_ids    = pData.r_ids
+                        self.current_crumbs = pData.r_crumbs
+                        self._FieldUpdateDisplay(!p_suppress_change)
+                        
+                        apex.debug.log('PTRAIL', 'GET_RECORD succeeded', 'value:' + self.current_value, 'ids=' + self.current_ids, 'crumbs=' + self.current_crumbs)
+                    },
+                    error: function (p_XHR, p_text, p_error) {
+                        apex.debug.log('PTRAIL', 'GET_RECORD failed for reason:', p_XHR, p_text, p_error)
+                        apex.message.alert('Access to a single record failed for following reason: ' + p_error)
+                    }
+                }
+            )
+        }
+    },
+
+// -------- _FieldCalcDisplayHTML ------------------------------------------------------------
 // -------- Work out html for a certain value------------------------------------------------------------
 
-    FieldCalcDisplayHTML: function () {       // private
+    _FieldCalcDisplayHTML: function () {       // private
         var self = this
         
         if (self.current_crumbs == 'FLAG_INVALID') {
@@ -184,66 +218,25 @@ $.widget('rabarton.parentTrail', {
         return display_html
     },
     
-// -------- FieldUpdateDisplay ------------------------------------------------------------
+// -------- _FieldUpdateDisplay ------------------------------------------------------------
 // -------- update displayed data and trigger change if needed -------------------------------------------
 
-    FieldUpdateDisplay: function (p_trigger_change = false) {  // private
+    _FieldUpdateDisplay: function (p_trigger_change = false) {  // private
         var self = this
         
-        self.itemDisplay$.html(self.FieldCalcDisplayHTML())
+        self.itemDisplay$.html(self._FieldCalcDisplayHTML())
         
         if (p_trigger_change)
             self.item$.trigger('change');
     },
     
-// -------- FieldSetValue ------------------------------------------------------------
-// -------- Something changed and we need to fetch data and then update display -------------------------------------------
-
-    FieldSetValue: function (p_new_value, p_new_ids, p_new_crumbs, p_suppress_change = false) {   // private
-        var self = this
-        
-        apex.debug.log('PTRAIL', 'FieldSetValue', 'id:' + self.options.itemName, 'new_value:' + p_new_value, 'new_ids=' + p_new_ids, 'new_crumbs=' + p_new_crumbs)
-        
-        self.current_value  = p_new_value  ? p_new_value  : ''
-        self.current_ids    = p_new_ids    ? p_new_ids    : ''
-        self.current_crumbs = p_new_crumbs ? p_new_crumbs : ''
-        
-        if (!self.current_value || (self.current_ids && self.current_crumbs)) {
-            self.FieldUpdateDisplay(!p_suppress_change)
-        }
-        else {
-            apex.server.plugin(
-                self.options.ajaxIdentifier, 
-                {
-                    x01: 'GET_RECORD',
-                    x02: self.current_value,
-                    pageItems: [self.options.pageItemsToSubmit, self.options.cascadingItems].filter(function (selector) {return (selector)}).join(',')
-                }, 
-                {
-                    dataType: 'json',
-                    success: function (pData) {                    
-                        self.current_ids    = pData.r_ids
-                        self.current_crumbs = pData.r_crumbs
-                        self.FieldUpdateDisplay(!p_suppress_change)
-                        
-                        apex.debug.log('PTRAIL', 'GET_RECORD succeeded', 'value:' + self.current_value, 'ids=' + self.current_ids, 'crumbs=' + self.current_crumbs)
-                    },
-                    error: function (p_XHR, p_text, p_error) {
-                        apex.debug.log('PTRAIL', 'GET_RECORD failed for reason:', p_XHR, p_text, p_error)
-                        apex.message.alert('Access to a single record failed for following reason: ' + p_error)
-                    }
-                }
-            )
-        }
-    },
-
-// -------- SetupApexAPI ------------------------------------------------------------
+// -------- _SetupApexAPI ------------------------------------------------------------
 // -------- Get link into apex sorted -------------------------------------------
 
-    SetupApexAPI: function () {     // private
+    _SetupApexAPI: function () {     // private
         var self = this
 
-        apex.debug.log('PTRAIL', 'SetupApexAPI', 'id:' + self.options.itemName)
+        apex.debug.log('PTRAIL', '_SetupApexAPI', 'id:' + self.options.itemName)
 
         apex.item.create(self.options.itemName, {            
             enable: function () {            
@@ -251,14 +244,14 @@ $.widget('rabarton.parentTrail', {
                 self.itemDisplay$.removeClass('apex-item-display-only display_only')
                 self.itemDisplay$.addClass('popup_lov apex-item-text apex-item-popup-lov')
                 if (self.searchButton$) {self.searchButton$.show()}
-                self.FieldUpdateDisplay()
+                self._FieldUpdateDisplay()
             },
             disable: function () {
                 self.item$.prop('disabled', true)
                 self.itemDisplay$.removeClass('popup_lov apex-item-text apex-item-popup-lov')
                 self.itemDisplay$.addClass('apex-item-display-only display_only')
                 if (self.searchButton$) {self.searchButton$.hide()}
-                self.FieldUpdateDisplay()
+                self._FieldUpdateDisplay()
             },
             isDisabled: function () {
                 return self.item$.prop('disabled')
@@ -292,15 +285,15 @@ $.widget('rabarton.parentTrail', {
         })
     },
     
-// ======================= private dialog functions =================================================================
+// ======================= dialog functions =================================================================
 
-// -------- DialogCreate ------------------------------------------------------------
+// -------- _DialogCreate ------------------------------------------------------------
 // -------- set up popup dialog -------------------------------------------
 
-    DialogCreate: function () {  // private
+    _DialogCreate: function () {  // private
         var self = this
         
-        apex.debug.log('PTRAIL', 'DialogCreate', 'id:' + self.options.itemName)
+        apex.debug.log('PTRAIL', '_DialogCreate', 'id:' + self.options.itemName)
 
     // set up basic elements
     
@@ -323,13 +316,13 @@ $.widget('rabarton.parentTrail', {
     
         self.dialog$.on('click', '#' + self.options.itemName + '_FILTER_BUTTON', function (e) {
             self.activeSearchTerm = self.dialogFilterText$.val()
-            self.DialogSearchRecords(1)
+            self._DialogSearchRecords(1)
         })   
         
         self.dialog$.on('keydown', '#' + self.options.itemName + '_FILTER_TEXT', function (e) {
             if (e.keyCode == 13) { 
                 self.activeSearchTerm = self.dialogFilterText$.val()
-                self.DialogSearchRecords(1)
+                self._DialogSearchRecords(1)
             }/*
             else if (e.keyCode == 34) {  // XXX at higher level of dialog may want to add 38 => UP and 40 => DOWN, 33 => Page up, 34 => Page down
                 ...
@@ -343,17 +336,17 @@ $.widget('rabarton.parentTrail', {
         })  
         
         self.dialog$.on('click', '#' + self.options.itemName + '_PREV,#' + self.options.itemName + '_NEXT', function (e) {
-            self.DialogSearchRecords(this.dataset.row)
+            self._DialogSearchRecords(this.dataset.row)
         })
     },
     
-// -------- DialogSearchRecords ------------------------------------------------------------
+// -------- _DialogSearchRecords ------------------------------------------------------------
 // -------- Trigger a search for next rows and stick results into href list ----------------------------------
 
-    DialogSearchRecords: function (p_first_row) {     // private   
+    _DialogSearchRecords: function (p_first_row) {     // private   
         var self = this
       
-        apex.debug.log('PTRAIL', 'DialogSearchRecords', 'id:' + self.options.itemName, 'p_first_row:' + p_first_row)
+        apex.debug.log('PTRAIL', '_DialogSearchRecords', 'id:' + self.options.itemName, 'p_first_row:' + p_first_row)
 
         var items_needed = [self.options.pageItemsToSubmit, self.options.cascadingItems].filter(function (selector) {return (selector)}).join(',')        
 

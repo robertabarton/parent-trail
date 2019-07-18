@@ -11,7 +11,7 @@ This is just like breadcrumbs and really helps the user navigate in hierarchical
 # Features
 - Looks like and mirrors in most respects the behavior of the normal popup LOV
 - But shows full 'clickable' path to a record
-- Javascript API supported
+- Javascript API for Apex supported
 - Very compact code, so not much loading overhead
 - Compatible with Apex 5.1, 18.x, 19.x
 

@@ -24,7 +24,7 @@ begin
         p_max_rows          => 1
         );
 
-    p_ids    := ltrim(l_query_result(2)(1), ':');  -- trim off any leading separators
+    p_ids    := ltrim(l_query_result(2)(1), ':');
     p_crumbs := ltrim(l_query_result(3)(1), ':');
 
 exception
