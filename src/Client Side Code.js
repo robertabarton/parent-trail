@@ -30,7 +30,7 @@ $.widget('rabarton.parentTrail', {
     current_ids:        '',
     current_crumbs:     '',
 
-    item$: null,
+    item$:              null,
     itemDisplay$:       null,
     searchButton$:      null,
     
@@ -313,24 +313,24 @@ $.widget('rabarton.parentTrail', {
         
         self.dialogRows$.css({height:400, overflow:'auto'})
     
-    // add in event handlers
+    // add in event handlers - watch out not every element may be present
     
         self.dialog$.on('click', '#' + self.options.itemName + '_FILTER_BUTTON', function (e) {
             self.activeSearchTerm = self.dialogFilterText$.val()
             self._DialogSearchRecords(1)
         })   
-        
         self.dialog$.on('keydown', '#' + self.options.itemName + '_FILTER_TEXT', function (e) {
             if (e.keyCode == 13) { 
                 self.activeSearchTerm = self.dialogFilterText$.val()
                 self._DialogSearchRecords(1)
-            }/*
-            else if (e.keyCode == 34) {  // XXX at higher level of dialog may want to add 38 => UP and 40 => DOWN, 33 => Page up, 34 => Page down
-                ...
-                e.stopPropagation()
-            }*/
-        })   
-        
+            }
+        })/*        
+        self.dialog$.on('keydown', text field search button, function (e) {
+            if (e.keyCode == 33 || e.keyCode == 34) {  // 33 => Page up, 34 => Page down
+                pass event onto content where it is already being processed properly
+            }
+        })
+        */          
         self.dialog$.on('click', 'a', function (e) {
             self.dialog$.dialog('close')
             self.FieldSetValue(this.dataset.r, this.dataset.d, this.dataset.s)
