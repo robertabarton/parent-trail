@@ -21,6 +21,9 @@ Go to https://apex.oracle.com/pls/apex/f?p=69472
 # Licence
 MIT
 
+# Credits
+I would like to thank Bartosz Ostrowski for providing me with invaluable guidance on developing this plugin 
+
 # How to install the plugin
 Download and install `ParentTrail Plugin.sql`
 If you'd like the demo application itself, download and install `ParentTrail Demo.sql`. Please include the option of 
