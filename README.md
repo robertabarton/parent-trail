@@ -51,17 +51,18 @@ Custom attributes:
 - Yes/No option of whether to include the popup search button on the right
 
 # Roadmap
-- Add support for RTL
+- Improve accessibility starting with support for application level control of plugin link color
 - Add support for icon attribute
-- Improve accessibility
+- Add custom attribute to allow developer to steer the initial population of records displayed in popup. At moment the full record table is shown, but you might want to start with the current selection and its descendants
 - Support keyboard triggered paging in popup
+- Add support for RTL
 
 # Changelog
 1.1 Initial version
-1.2 Minor fixes from initial release
+1.1b Minor fixes from initial release
 
 # Known issues
-- Page down and up buttons not yet processed by popup dialog 
+- Page down and up buttons not yet processed by popup dialog if search field has focus
 
 Please log any new issues in the github issue trail and I will deal with them as soon as possible
 [Parent trail issues](https://github.com/robertabarton/parent-trail/issues)

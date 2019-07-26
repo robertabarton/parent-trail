@@ -218,7 +218,7 @@ $.widget('rabarton.parentTrail', {
 
         return display_html
     },
-    
+   
 // -------- _FieldUpdateDisplay ------------------------------------------------------------
 // -------- update displayed data and trigger change if needed -------------------------------------------
 
@@ -329,8 +329,7 @@ $.widget('rabarton.parentTrail', {
             if (e.keyCode == 33 || e.keyCode == 34) {  // 33 => Page up, 34 => Page down
                 pass event onto content where it is already being processed properly
             }
-        })
-        */          
+        })*/          
         self.dialog$.on('click', 'a', function (e) {
             self.dialog$.dialog('close')
             self.FieldSetValue(this.dataset.r, this.dataset.d, this.dataset.s)

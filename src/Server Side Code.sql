@@ -83,7 +83,7 @@ begin
 -- field icon --
 
   --if length(trim(p_item.icon_css_classes)) > 0 then
-  --    sys.htp.prn('<span class="apex-item-icon fa ' || p_item.icon_css_classes || '"></span>');
+      --sys.htp.prn('<span class="apex-item-icon fa ' || p_item.icon_css_classes || '"></span>');
   --end if;    
 
 -- raw text for display --
@@ -103,7 +103,7 @@ begin
             sys.htp.prn(' hidden');
         end if;
         sys.htp.prn('>');
-        sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
+      --sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
         sys.htp.prn('</button>');
     end if;
 
