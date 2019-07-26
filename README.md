@@ -22,7 +22,7 @@ Go to https://apex.oracle.com/pls/apex/f?p=69472
 MIT
 
 # Credits
-I would like to thank Bartosz Ostrowski for providing me with invaluable guidance on developing this plugin 
+I would like to thank [Bartosz Ostrowski](https://github.com/bostrowski) for providing me with invaluable guidance on developing this plugin 
 
 # How to install the plugin
 Download and install `ParentTrail Plugin.sql`
