@@ -16,7 +16,7 @@ This is just like breadcrumbs and really helps the user navigate in hierarchical
 - Compatible with Apex 19.1
 
 # Want to see what it is like?
-Go to Parent Trail [Demo](https://apex.oracle.com/pls/apex/f?p=69472)
+Go to [Parent Trail Demo](https://apex.oracle.com/pls/apex/f?p=69472)
 
 # Licence
 MIT
