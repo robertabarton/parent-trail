@@ -12,11 +12,11 @@ This is just like breadcrumbs and really helps the user navigate in hierarchical
 - Looks like and mirrors in most respects the behavior of the normal popup LOV
 - But shows full 'clickable' path to a record
 - Javascript API for Apex supported
-- Very compact code, so not much loading overhead
+- Compact code, so minimal loading overhead
 - Compatible with Apex 19.1
 
 # Want to see what it is like?
-Go to https://apex.oracle.com/pls/apex/f?p=69472
+Go to Parent Trail [Demo](https://apex.oracle.com/pls/apex/f?p=69472)
 
 # Licence
 MIT
