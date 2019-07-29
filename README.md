@@ -32,9 +32,9 @@ installing accompanying objects so that sample data is created for you
 # How to use
 Use like a normal popup LOV, but you need to tweak the definition of the query to return three columns. The first 
 column “r” is the value that the item should have if this record is selected. The second and third columns are basically
-a trail from the top of the hierarchy through to the current record. The second column “d” specifically picks out the 
-values as it goes along, while the third column “s” picks out what needs to be displayed as it goes along. For a table
-"locations" with id, parent_id, and location columns, here is a sample query:
+a trail from the top of the hierarchy through to the current record with segments separated by colons. The second column “d” 
+specifically picks out the values as it goes along, while the third column “s” picks out what needs to be displayed as it
+goes along. For a table "locations" with id, parent_id, and location columns, here is a sample query:
 ```sql
 select
     id                                 as r,
