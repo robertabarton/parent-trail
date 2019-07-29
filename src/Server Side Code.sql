@@ -103,7 +103,7 @@ begin
             sys.htp.prn(' hidden');
         end if;
         sys.htp.prn('>');
-      --sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
+        sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
         sys.htp.prn('</button>');
     end if;
 

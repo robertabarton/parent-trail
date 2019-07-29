@@ -1,44 +1,30 @@
 $.widget('rabarton.parentTrail', {
 
     options: {
-        id: '',
-        itemName: '',
-        ajaxIdentifier: '',
-        cascadingItems: '',
-        pageItemsToSubmit: '',
-        separator: ' » ',
-        display_null: 'N',
-        null_text: '',
-        null_value: '',
-        showSearchButton: 'Y',
-        invalidValue: 'Invalid value',
-        title: '',
-        noDataFound: '',
-        previousLabel: 'Previous',
-        nextLabel: 'Next',
+        id:                 '',
+        itemName:           '',
+        ajaxIdentifier:     '',
+        cascadingItems:     '',
+        pageItemsToSubmit:  '',
+        separator:          ' » ',
+        display_null:       'N',
+        null_text:          '',
+        null_value:         '',
+        showSearchButton:   'Y',
+        invalidValue:       'Invalid value',
+        title:              '',
+        noDataFound:        '',
+        previousLabel:      'Previous',
+        nextLabel:          'Next',
 
-        initial_value: '',
-        initial_ids: '',
-        initial_crumbs: ''
+        initial_value:      '',
+        initial_ids:        '',
+        initial_crumbs:     '',
+        
+        modalWidth:         500,    // apex side attributes still to be set up for these options, in interim if needed please set on client side
+        modalHeight:        500,
+        modalRows:          100
     },
-
-    modalWidth:         500,
-    modalHeight:        500,
-    modalRows:          100,
-    
-    current_value:      '',
-    current_ids:        '',
-    current_crumbs:     '',
-
-    item$:              null,
-    itemDisplay$:       null,
-    searchButton$:      null,
-    
-    dialog$:            null,
-    dialogFilterText$:  null,
-    dialogRows$:        null,
-    
-    activeSearchTerm:   '',
 
 // -------- _create ----------------------------------------------------------------
 // -------- jquery widget creation -------------------------------------------------
@@ -47,10 +33,23 @@ $.widget('rabarton.parentTrail', {
         var self = this
 
         apex.debug.log('PTRAIL', '_Create', self.options.itemName, self.options)
-
-        self.item$           = $('#' + self.options.itemName)      
-        self.itemDisplay$    = $('#' + self.options.itemName + '_DISPLAY')
         
+    // put instance specific variables on map
+
+        self.current_value      = ''
+        self.current_ids        = ''
+        self.current_crumbs     = ''
+
+        self.item$              = $('#' + self.options.itemName)      
+        self.itemDisplay$       = $('#' + self.options.itemName + '_DISPLAY')
+        self.searchButton$      = null
+        
+        self.dialog$            = null
+        self.dialogFilterText$  = null
+        self.dialogRows$        = null
+        
+        self.activeSearchTerm   = ''
+
     // put inverted commas back in escaped separator
     
         self.options.separator = self.options.separator.replace(/&quot;/g, '"')
@@ -85,8 +84,8 @@ $.widget('rabarton.parentTrail', {
                 self.dialog$.dialog({
                     title: self.options.title,
                     modal: true,
-                    height: self.modalHeight,
-                    width: self.modalWidth,
+                    height: self.options.modalHeight,
+                    width: self.options.modalWidth,
                     dialogClass: 'ui-dialog--apex',
                     close: function() {
                         self.dialogRows$.html('<br>')
@@ -388,7 +387,7 @@ $.widget('rabarton.parentTrail', {
                         if (pData.first_row != 1 || pData.more_there ) {
                             display_html += '<br><div class="t-PopupLOV-pagination">Row(s) ' + pData.first_row + ' - ' + pData.last_row + '</div>'                        
                             if (pData.first_row != 1) {
-                                display_html += '<input id="' + self.options.itemName + '_PREV" data-row="' + (pData.first_row - self.modalRows) + '" type="button" value="' + self.options.previousLabel + '" class="t-Button t-PopupLOV-button";">'
+                                display_html += '<input id="' + self.options.itemName + '_PREV" data-row="' + (pData.first_row - self.options.modalRows) + '" type="button" value="' + self.options.previousLabel + '" class="t-Button t-PopupLOV-button";">'
                             }
                             if (pData.more_there) {
                                 display_html += '<input id="' + self.options.itemName + '_NEXT" data-row="' + (pData.last_row + 1) + '" type="button" value="' + self.options.nextLabel + '" class="t-Button t-PopupLOV-button";">'
