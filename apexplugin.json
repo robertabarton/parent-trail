@@ -11,8 +11,7 @@
   "license" : "MIT",
   "author" : {
     "name" : "Robert Barton",
-    "email" : "robert.barton@gitm.biz",
-    "url" : "https://www.linkedin.com/in/robert-adrian-barton/"
+    "email" : "robert.barton@gitm.biz"
   },
   "repository" : {
     "type" : "git",
