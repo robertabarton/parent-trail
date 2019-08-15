@@ -42,6 +42,7 @@ procedure render (
   p_result in out nocopy apex_plugin.t_item_render_result
 )
 is
+    l_apex_version        apex_release.version_no%type;
     l_ids                 varchar2(4000);
     l_crumbs              varchar2(4000);
     
@@ -65,53 +66,58 @@ begin
         'lov_null_text',    p_item.lov_null_text,
         'lov_null_value',   p_item.lov_null_value        
         );
-    
+        
 -- get data you need --
 
     get_record(p_item.lov_definition, p_param.value, l_ids, l_crumbs);
     
+-- see what apex release we are on --
+
+    select version_no into l_apex_version from apex_release;
+
 -- embed hidden input that hold value --
-    
-    sys.htp.prn('<input'); 
-    sys.htp.prn(' type="hidden" ');
+           
+    sys.htp.prn('<input type="hidden" ');
     sys.htp.prn(apex_plugin_util.get_element_attributes(p_item, apex_plugin.get_input_name_for_page_item(false)));    
-    if p_param.is_readonly or p_param.is_printer_friendly then
-        sys.htp.prn(' disabled');  
-    end if;   
     sys.htp.prn('>');
 
--- field icon --
+-- now what gets displayed --
 
-  --if length(trim(p_item.icon_css_classes)) > 0 then
-      --sys.htp.prn('<span class="apex-item-icon fa ' || p_item.icon_css_classes || '"></span>');
-  --end if;    
-
--- raw text for display --
-
-    sys.htp.prn('<span id="' || p_item.name || '_DISPLAY" ');
-    sys.htp.prn(' class="' || case when p_param.is_readonly then 'apex-item-display-only display_only' else 'popup_lov apex-item-text apex-item-popup-lov' end); 
-  --sys.htp.prn(case when length(trim(p_item.icon_css_classes)) > 0 then ' apex-item-has-icon' end);
-    sys.htp.prn(' ' || p_item.element_css_classes || '">'); 
-    sys.htp.prn('</span>');
-
--- add in search button --
-
-    if p_item.attribute_02 = 'Y' then
-        sys.htp.prn('<button type="button" id="' || p_item.name || '_BUTTON"');
-        sys.htp.prn(' class="a-Button modal-lov-button a-Button--popupLOV"');
-        if p_param.is_readonly or p_param.is_printer_friendly then
-            sys.htp.prn(' hidden');
+    if p_param.is_readonly or p_param.is_printer_friendly then
+    
+        sys.htp.prn('<span id="' || p_item.name || '_DISPLAY" class="display_only apex-item-display-only ' || p_item.element_css_classes || '"></span>');
+        
+    elsif apex_string.split(l_apex_version, '.')(1) = '5' then    -- sandwich into table cells
+    
+        sys.htp.prn('<table border="0" cellpadding="0" cellspacing="0" class="lov"><tbody><tr>');
+        sys.htp.prn('<td id="' || p_item.name || '_DISPLAY" class="u-TF-item--text" style="width:100%; min-width:' || p_item.element_width || 'ch;"></td>');   -- opportunistic piggy back off css-less structure
+        
+        if p_item.attribute_02 = 'Y' then  -- add search button
+            sys.htp.prn('<td style="vertical-align:top";>');
+            sys.htp.prn('<button type="button" id="' || p_item.name || '_BUTTON" class="a-Button modal-lov-button a-Button--popupLOV">');
+            sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
+            sys.htp.prn('</button>');
+            sys.htp.prn('</td>');
         end if;
-        sys.htp.prn('>');
-        sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
-        sys.htp.prn('</button>');
-    end if;
+        
+        sys.htp.prn('</tr></tbody></table>');
+        
+    else  -- apex 18, 19 so can drop the td's
+    
+        sys.htp.prn('<span id="' || p_item.name || '_DISPLAY" class="popup_lov apex-item-text apex-item-popup-lov ' || p_item.element_css_classes || '" style="min-width:' || p_item.element_width || 'ch;"></span>');
 
+        if p_item.attribute_02 = 'Y' then  -- add search button
+            sys.htp.prn('<button type="button" id="' || p_item.name || '_BUTTON" class="a-Button modal-lov-button a-Button--popupLOV">');
+            sys.htp.prn('<span class="a-Icon icon-popup-lov"></span>');
+            sys.htp.prn('</button>');
+        end if;
+        
+   end if;
+        
 -- associate javascript side code with the item --
 
     apex_javascript.add_onload_code (
         '$("#' || p_item.name || '").parentTrail({'
-              || 'id: "'                || p_item.name || '_MODAL",'
               || 'itemName: "'          || p_item.name || '",'
               || 'ajaxIdentifier: "'    || apex_plugin.get_ajax_identifier || '",'
               || 'cascadingItems: "'    || apex_plugin_util.item_names_to_jquery(p_item_names => p_item.lov_cascade_parent_items, p_item => p_item) || '",'  -- XXX probably don't need to jquery these

@@ -13,7 +13,7 @@ This is just like breadcrumbs and really helps the user navigate in hierarchical
 - But shows full 'clickable' path to a record
 - Javascript API for Apex supported
 - Compact code, so minimal loading overhead
-- Compatible with Apex 19.1
+- Tested with Apex 19.1, 18.1, 18.2, 5.1.4
 
 # Want to see what it is like?
 Go to [Parent Trail Demo](https://apex.oracle.com/pls/apex/f?p=69472)
@@ -54,7 +54,6 @@ Custom attributes:
 - Yes/No option of whether to include the popup search button on the right
 
 # Roadmap
-- Add compatibility to Apex 5.x, 18.x
 - Improve accessibility starting with support for application level control of plugin link color
 - Add support for icon attribute
 - Add custom attribute to allow developer to steer the initial population of records displayed in popup. At moment the full record table is shown, but you might want to start with the current selection and its descendants
@@ -65,6 +64,8 @@ Custom attributes:
 1.1 Initial version
 
 1.1b Minor fixes from initial release
+
+1.1c Backwards compatibility extended back to 5.1.4 and 18.1
 
 # Known issues
 - Page down and up buttons not yet processed by popup dialog if search field has focus

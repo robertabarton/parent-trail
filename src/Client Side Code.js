@@ -1,7 +1,6 @@
 $.widget('rabarton.parentTrail', {
 
     options: {
-        id:                 '',
         itemName:           '',
         ajaxIdentifier:     '',
         cascadingItems:     '',
@@ -33,7 +32,7 @@ $.widget('rabarton.parentTrail', {
         var self = this
 
         apex.debug.log('PTRAIL', '_Create', self.options.itemName, self.options)
-        
+
     // put instance specific variables on map
 
         self.current_value      = ''
@@ -179,8 +178,8 @@ $.widget('rabarton.parentTrail', {
         
         apex.message.clearErrors(self.options.itemName);
           
-        var display_html = ''
-        if (self.item$.prop('disabled')) {
+        var display_html = ''       
+        if (self.item$.prop('disabled') || self.itemDisplay$.hasClass('display_only')) {  // either disabled or readonly or printer friendly
             if (self.options.display_null == 'Y') {
                 display_html += self.options.null_text
             }
@@ -202,7 +201,7 @@ $.widget('rabarton.parentTrail', {
                 return display_html;
             
             var l_placeholder = self.item$.attr('placeholder')
-            return l_placeholder === undefined ? '' : l_placeholder
+            return l_placeholder === undefined ? '&nbsp;' : l_placeholder    // Height misbehave if span totally empty     
         }
         
         var crumbs = self.current_crumbs.split(':')
@@ -241,15 +240,13 @@ $.widget('rabarton.parentTrail', {
         apex.item.create(self.options.itemName, {            
             enable: function () {            
                 self.item$.prop('disabled', false)
-                self.itemDisplay$.removeClass('apex-item-display-only display_only')
-                self.itemDisplay$.addClass('popup_lov apex-item-text apex-item-popup-lov')
+                self.itemDisplay$.removeClass('apex_disabled')
                 if (self.searchButton$) {self.searchButton$.show()}
                 self._FieldUpdateDisplay()
             },
             disable: function () {
                 self.item$.prop('disabled', true)
-                self.itemDisplay$.removeClass('popup_lov apex-item-text apex-item-popup-lov')
-                self.itemDisplay$.addClass('apex-item-display-only display_only')
+                self.itemDisplay$.addClass('apex_disabled')
                 if (self.searchButton$) {self.searchButton$.hide()}
                 self._FieldUpdateDisplay()
             },
@@ -405,4 +402,3 @@ $.widget('rabarton.parentTrail', {
         )
     }    
 })
-

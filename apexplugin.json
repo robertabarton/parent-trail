@@ -1,6 +1,6 @@
 {
   "name" : "Parent Trail",
-  "version" : "1.1b",
+  "version" : "1.1c",
   "description" : "Page item shows full clickable path for entries stemming from a hierarchical table using parent_id",
   "keywords" : ["plugin", "parent_id", "path", "breadcrumbs", "hierarchy", "popup", "LOV"],
   "homepage" : "https://github.com/robertabarton/parent-trail",
@@ -26,7 +26,10 @@
     ],
     "apex": {
       "versions": [
-        "19.1.0"
+        "19.1",
+        "18.1",
+        "18.2",
+        "5.1.4"
       ],
       "plugin": {
         "internalName": "RABARTON.PARENTTRAIL",
