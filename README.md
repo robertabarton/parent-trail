@@ -26,8 +26,8 @@ I would like to thank [Bartosz Ostrowski](https://github.com/bostrowski) for pro
 
 # How to install the plugin
 Download and install `ParentTrail Plugin.sql`
-If you'd like the demo application itself, download and install `ParentTrail Demo.sql`. Please include the option of 
-installing accompanying objects so that sample data is created for you
+If you'd like the demo application itself, download and install `ParentTrail Demo for 18 or 19` or `ParentTrail Demo for 5.1.4` depending 
+on your Apex version. Please include the option of installing accompanying objects so that sample data is created for you
 
 # How to use
 Use like a normal popup LOV, but you need to tweak the definition of the query to return three columns. The first 
@@ -65,7 +65,7 @@ Custom attributes:
 
 1.1b Minor fixes from initial release
 
-1.1c Backwards compatibility extended back to 5.1.4 and 18.1
+1.1c Compatibility extended back to 5.1.4 and 18.1
 
 # Known issues
 - Page down and up buttons not yet processed by popup dialog if search field has focus
