@@ -193,7 +193,7 @@ $.widget('rabarton.parentTrail', {
         }
     
         if (self.options.display_null == 'Y') {
-            display_html += '<a data-i="0" href="javascript:null;">' + self.options.null_text + '</a>'
+            display_html += '<a data-i="0" href="javascript:void(0);">' + self.options.null_text + '</a>'
         }
 
         if (!self.current_value || self.current_value.length === 0) {
@@ -211,7 +211,7 @@ $.widget('rabarton.parentTrail', {
             if (display_html.length > 0) {
                 display_html += self.options.separator
             }
-            display_html += '<a data-i="' + (i == crumbs.length -1 ? -1 : i + 1) + '" href="javascript:null;">' + crumbs[i] + '</a>'
+            display_html += '<a data-i="' + (i == crumbs.length -1 ? -1 : i + 1) + '" href="javascript:void(0);">' + crumbs[i] + '</a>'
         }
 
         return display_html
@@ -373,12 +373,12 @@ $.widget('rabarton.parentTrail', {
                         if (self.options.display_null == 'Y') {
                             l_null_text = self.options.null_text + self.options.separator
                             if (!self.activeSearchTerm) {
-                                display_html += '<br><a data-r="" data-d="" data-s="" href="javascript:null;">' + self.options.null_text + '</a>'
+                                display_html += '<br><a data-r="" data-d="" data-s="" href="javascript:void(0);">' + self.options.null_text + '</a>'
                             }
                         }
 
                         pData.rows.forEach(function (r, index) {
-                            display_html += '<br><a data-r="' + r['R'] + '" data-d="' + r['D'] + '" data-s="' + r['S'] + '" href="javascript:null;">' + l_null_text + r['S'].replace(/:/g, self.options.separator) + '</a>'
+                            display_html += '<br><a data-r="' + r['R'] + '" data-d="' + r['D'] + '" data-s="' + r['S'] + '" href="javascript:void(0);">' + l_null_text + r['S'].replace(/:/g, self.options.separator) + '</a>'
                             })
                             
                         if (pData.first_row != 1 || pData.more_there ) {
