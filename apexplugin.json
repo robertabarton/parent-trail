@@ -1,6 +1,6 @@
 {
   "name" : "Parent Trail",
-  "version" : "1.1c",
+  "version" : "1.1d",
   "description" : "Page item shows full clickable path for entries stemming from a hierarchical table using parent_id",
   "keywords" : ["plugin", "parent_id", "path", "breadcrumbs", "hierarchy", "popup", "LOV"],
   "homepage" : "https://github.com/robertabarton/parent-trail",
