@@ -67,6 +67,8 @@ Custom attributes:
 
 1.1c Compatibility extended back to 5.1.4 and 18.1
 
+1.1d Brought in LouisMoreaux's fix for Firefox
+
 # Known issues
 - Page down and up buttons not yet processed by popup dialog if search field has focus
 
